@@ -1,0 +1,759 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Vehicle Insurance Claim Prediction System</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef5ff;
+    color: #222;
+}
+
+.container {
+    width: 90%;
+    max-width: 850px;
+    margin: 30px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+}
+
+h1 {
+    text-align: center;
+    color: #174ea6;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+}
+
+.field.full {
+    grid-column: 1 / 3;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+input,
+select {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.buttons {
+    margin-top: 25px;
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 13px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.predict-btn {
+    background: #2864dc;
+    color: white;
+    flex: 1;
+}
+
+.reset-btn {
+    background: #64748b;
+    color: white;
+    flex: 1;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    margin-top: 25px;
+    color: #2864dc;
+    font-weight: bold;
+}
+
+.result {
+    display: none;
+    margin-top: 30px;
+    padding: 25px;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.result.low {
+    border: 2px solid #22c55e;
+}
+
+.result.medium {
+    border: 2px solid #eab308;
+}
+
+.result.high {
+    border: 2px solid #ef4444;
+}
+
+.result-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.low .result-title {
+    color: #16a34a;
+}
+
+.medium .result-title {
+    color: #ca8a04;
+}
+
+.high .result-title {
+    color: #dc2626;
+}
+
+.probability {
+    text-align: center;
+    font-size: 42px;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+.low .probability {
+    color: #16a34a;
+}
+
+.medium .probability {
+    color: #ca8a04;
+}
+
+.high .probability {
+    color: #dc2626;
+}
+
+.explanation {
+    text-align: center;
+    line-height: 1.6;
+    color: #444;
+}
+
+.result-box {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #eef4ff;
+}
+
+.result-box h3 {
+    color: #174ea6;
+    margin-top: 0;
+}
+
+.claim-status {
+    font-size: 23px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.risk-factors {
+    margin-top: 10px;
+}
+
+.risk-factors li {
+    margin-bottom: 8px;
+}
+
+.no-risk {
+    color: #16a34a;
+    font-weight: bold;
+}
+
+.next-steps li {
+    margin-bottom: 8px;
+}
+
+.info {
+    margin-top: 25px;
+    padding: 18px;
+    background: #eef4ff;
+    border-radius: 10px;
+    line-height: 1.6;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 25px;
+    color: #777;
+    font-size: 14px;
+}
+
+@media (max-width: 650px) {
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .field.full {
+        grid-column: 1;
+    }
+
+    .container {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .buttons {
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🚗 Vehicle Insurance Claim Prediction System</h1>
+
+<p class="subtitle">
+Predict fraud risk and check preliminary insurance claim eligibility.
+</p>
+
+
+<form id="predictionForm">
+
+<div class="form-grid">
+
+<div class="field">
+<label>Customer Name</label>
+<input type="text" id="customerName" required>
+</div>
+
+<div class="field">
+<label>Age</label>
+<input type="number" id="age" min="18" max="100" required>
+</div>
+
+<div class="field">
+<label>Gender</label>
+<select id="gender" required>
+<option value="">Select Gender</option>
+<option value="Male">Male</option>
+<option value="Female">Female</option>
+</select>
+</div>
+
+<div class="field">
+<label>City</label>
+<input type="text" id="city" required>
+</div>
+
+<div class="field">
+<label>Vehicle Type</label>
+<select id="vehicleType" required>
+<option value="">Select Vehicle Type</option>
+<option value="Car">Car</option>
+<option value="Two Wheeler">Two Wheeler</option>
+<option value="SUV">SUV</option>
+<option value="Truck">Truck</option>
+</select>
+</div>
+
+<div class="field">
+<label>Vehicle Age (Years)</label>
+<input type="number" id="vehicleAge" min="0" max="30" required>
+</div>
+
+<div class="field">
+<label>Driving Experience (Years)</label>
+<input type="number" id="experience" min="0" max="60" required>
+</div>
+
+<div class="field">
+<label>Previous Claims</label>
+<select id="previousClaims" required>
+<option value="">Select Previous Claims</option>
+<option value="None">None</option>
+<option value="1">1</option>
+<option value="2 to 4">2 to 4</option>
+<option value="more than 4">More than 4</option>
+</select>
+</div>
+
+<div class="field">
+<label>Annual Income (₹)</label>
+<input type="number" id="income" min="0" required>
+</div>
+
+<div class="field">
+<label>Annual Premium (₹)</label>
+<input type="number" id="premium" min="0" required>
+</div>
+
+<div class="field">
+<label>Policy Active</label>
+<select id="policyActive" required>
+<option value="">Select Option</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</div>
+
+<div class="field">
+<label>Emergency / Accident</label>
+<select id="emergency" required>
+<option value="">Select Option</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</div>
+
+<div class="field full">
+<label>Police Report Filed</label>
+<select id="policeReport" required>
+<option value="">Select Option</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</div>
+
+</div>
+
+
+<div class="buttons">
+
+<button type="submit" class="predict-btn">
+🔍 Predict Claim
+</button>
+
+<button type="reset" class="reset-btn">
+🔄 Reset Form
+</button>
+
+</div>
+
+</form>
+
+
+<div class="loading" id="loading">
+🔄 Analyzing details using Machine Learning...
+</div>
+
+
+<div class="result" id="result">
+
+<div class="result-title" id="resultTitle"></div>
+
+<p style="text-align:center;">
+<strong>Customer:</strong>
+<span id="customerResult"></span>
+</p>
+
+<p style="text-align:center;">
+<strong>Vehicle:</strong>
+<span id="vehicleResult"></span>
+</p>
+
+
+<div class="probability" id="probability">
+0%
+</div>
+
+<p class="explanation" id="resultText"></p>
+
+
+<!-- CLAIM ELIGIBILITY -->
+
+<div class="result-box">
+
+<h3>📋 Claim Eligibility</h3>
+
+<div class="claim-status" id="claimStatus">
+-
+</div>
+
+<p id="claimReason"></p>
+
+</div>
+
+
+<!-- RISK FACTORS -->
+
+<div class="result-box">
+
+<h3>⚠️ Risk Factors Identified</h3>
+
+<ul class="risk-factors" id="riskFactors">
+</ul>
+
+</div>
+
+
+<!-- NEXT STEPS -->
+
+<div class="result-box">
+
+<h3>➡️ Next Steps</h3>
+
+<ul class="next-steps" id="nextSteps">
+</ul>
+
+</div>
+
+</div>
+
+
+<div class="info">
+
+<strong>How does it work?</strong>
+
+<br><br>
+
+The system uses a trained Random Forest Machine Learning model
+to estimate the possibility of fraudulent activity based on
+the information entered by the user.
+
+The system also identifies risk factors and provides a
+preliminary claim eligibility result.
+
+<br><br>
+
+<strong>Note:</strong>
+The result is a preliminary prediction. Final claim approval
+depends on the insurance company's policy verification.
+
+</div>
+
+
+<div class="footer">
+
+Vehicle Insurance Claim Prediction System |
+Machine Learning Project
+
+</div>
+
+</div>
+
+
+<script>
+
+document
+.getElementById("predictionForm")
+.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const loading =
+        document.getElementById("loading");
+
+    const result =
+        document.getElementById("result");
+
+    loading.style.display = "block";
+    result.style.display = "none";
+
+
+    const data = {
+
+        customerName:
+            document.getElementById("customerName").value,
+
+        age:
+            document.getElementById("age").value,
+
+        gender:
+            document.getElementById("gender").value,
+
+        city:
+            document.getElementById("city").value,
+
+        vehicleType:
+            document.getElementById("vehicleType").value,
+
+        vehicleAge:
+            document.getElementById("vehicleAge").value,
+
+        experience:
+            document.getElementById("experience").value,
+
+        previousClaims:
+            document.getElementById("previousClaims").value,
+
+        income:
+            document.getElementById("income").value,
+
+        premium:
+            document.getElementById("premium").value,
+
+        policyActive:
+            document.getElementById("policyActive").value,
+
+        emergency:
+            document.getElementById("emergency").value,
+
+        policeReport:
+            document.getElementById("policeReport").value
+
+    };
+
+
+    try {
+
+        const response =
+            await fetch("/predict", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(data)
+
+            });
+
+
+        const resultData =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                resultData.error ||
+                "Prediction failed"
+            );
+
+        }
+
+
+        const risk =
+            Number(resultData.probability);
+
+
+        loading.style.display = "none";
+        result.style.display = "block";
+
+        result.className = "result";
+
+
+        document.getElementById("customerResult")
+            .innerText = data.customerName;
+
+        document.getElementById("vehicleResult")
+            .innerText = data.vehicleType;
+
+        document.getElementById("probability")
+            .innerText = risk + "%";
+
+
+        /* LOW / MEDIUM / HIGH */
+
+        if (risk < 40) {
+
+            result.classList.add("low");
+
+            document.getElementById("resultTitle")
+                .innerText = "🟢 LOW RISK";
+
+            document.getElementById("resultText")
+                .innerText =
+                "The entered information shows a lower " +
+                "possibility of fraudulent activity. Normal " +
+                "claim verification may continue.";
+
+        }
+
+        else if (risk < 70) {
+
+            result.classList.add("medium");
+
+            document.getElementById("resultTitle")
+                .innerText = "🟡 MEDIUM RISK";
+
+            document.getElementById("resultText")
+                .innerText =
+                "The entered information shows a moderate " +
+                "possibility of fraudulent activity. " +
+                "Additional verification may be required.";
+
+        }
+
+        else {
+
+            result.classList.add("high");
+
+            document.getElementById("resultTitle")
+                .innerText = "🔴 HIGH RISK";
+
+            document.getElementById("resultText")
+                .innerText =
+                "The entered information shows a higher " +
+                "possibility of fraudulent activity. " +
+                "Additional verification and review may be required.";
+
+        }
+
+
+        /* CLAIM ELIGIBILITY */
+
+        document.getElementById("claimStatus")
+            .innerText =
+            resultData.claim_status ||
+            "NEEDS VERIFICATION";
+
+
+        document.getElementById("claimReason")
+            .innerText =
+            resultData.claim_reason ||
+            "";
+
+
+        /* RISK FACTORS */
+
+        const riskFactors =
+            document.getElementById("riskFactors");
+
+        riskFactors.innerHTML = "";
+
+
+        if (
+            resultData.risk_factors &&
+            resultData.risk_factors.length > 0
+        ) {
+
+            resultData.risk_factors.forEach(function(factor) {
+
+                const li =
+                    document.createElement("li");
+
+                li.innerText = factor;
+
+                riskFactors.appendChild(li);
+
+            });
+
+        }
+
+        else {
+
+            const li =
+                document.createElement("li");
+
+            li.innerText =
+                "No major risk factors identified.";
+
+            li.className = "no-risk";
+
+            riskFactors.appendChild(li);
+
+        }
+
+
+        /* NEXT STEPS */
+
+        const nextSteps =
+            document.getElementById("nextSteps");
+
+        nextSteps.innerHTML = "";
+
+
+        if (
+            resultData.next_steps &&
+            resultData.next_steps.length > 0
+        ) {
+
+            resultData.next_steps.forEach(function(step) {
+
+                const li =
+                    document.createElement("li");
+
+                li.innerText = step;
+
+                nextSteps.appendChild(li);
+
+            });
+
+        }
+
+    }
+
+
+    catch (error) {
+
+        loading.style.display = "none";
+
+        result.style.display = "block";
+
+        result.className = "result high";
+
+        document.getElementById("resultTitle")
+            .innerText = "❌ Prediction Error";
+
+        document.getElementById("probability")
+            .innerText = "";
+
+        document.getElementById("resultText")
+            .innerText = error.message;
+
+        document.getElementById("claimStatus")
+            .innerText = "Unable to check";
+
+        document.getElementById("claimReason")
+            .innerText =
+            "Please make sure the Flask server and ML model are running correctly.";
+
+    }
+
+});
+
+
+/* RESET */
+
+document
+.getElementById("predictionForm")
+.addEventListener("reset", function() {
+
+    setTimeout(function() {
+
+        document
+            .getElementById("result")
+            .style.display = "none";
+
+    }, 100);
+
+});
+
+</script>
+
+</body>
+</html>
+```
